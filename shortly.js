@@ -2,6 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+var bcrypt = require('bcrypt-nodejs');
 
 
 var db = require('./app/config');
@@ -35,69 +36,34 @@ var sess;
 //   console.log(req.session);
 //   res.render('signup');
 // });
+app.post('/',
+  function(req, res) {
+    console.log('ON THE RIGHT TRACK');
+    req.session.destroy(function(err){
+    if(err){
+      console.log(err);
+    } else {
+      res.redirect('/');
+    }
+    });
+  });
 
 app.get('/',
   function(req, res) {
+    sess = req.session;
     if (sess.username) {
+      res.render('index');
       //redirect to link page
     } else {
-      res.redirect('login');
+      res.render('signup');
     }
   });
 
-app.post('/login', 
+app.get('/login',
   function(req, res) {
-    sess = req.body.username;
-
-
+    res.render('login');
   });
-// app.get('/create', 
-// function(req, res) {
-//   res.render('index');
-// });
 
-// app.get('/links', 
-// function(req, res) {
-//   Links.reset().fetch().then(function(links) {
-//     res.send(200, links.models);
-//   });
-// });
-
-// app.post('/links', 
-// function(req, res) {
-//   var uri = req.body.url;
-
-//   if (!util.isValidUrl(uri)) {
-//     console.log('Not a valid url: ', uri);
-//     return res.send(404);
-//   }
-
-//   new Link({ url: uri }).fetch().then(function(found) {
-//     if (found) {
-//       res.send(200, found.attributes);
-//     } else {
-//       util.getUrlTitle(uri, function(err, title) {
-//         if (err) {
-//           console.log('Error reading URL heading: ', err);
-//           return res.send(404);
-//         }
-
-//         Links.create({
-//           url: uri,
-//           title: title,
-//           base_url: req.headers.origin
-//         })
-//         .then(function(newLink) {
-//           res.send(200, newLink);
-//         });
-//       });
-//     }
-//   });
-// });
-
-/************************************************************/
-// Write your authentication routes here
-/************************************************************/
 app.post('/signup', 
   function(req, res) {
     var username = req.body.username;
@@ -108,14 +74,94 @@ app.post('/signup',
       password: password,          
     })
     .then(function(newLink) {
-      req.session.username = username;
-      console.log(req.session);
-      res.redirect('/links');
+      res.redirect('/login');
     })
     .catch(function (err) {
       console.log('Choose a new username', err);
     });
 });
+
+
+app.post('/login', 
+  function(req, res) {
+    var username = req.body.username;
+    var password = req.body.password;
+
+    //check database for user
+    new User ({ username: username}).fetch()
+    .then(function(model) {
+      if (model) {
+
+        bcrypt.compare(password, model.get('password'), function(err, resp) {
+          if (resp) {
+            console.log('THIS IS THE MODEL', model, model.get('id'));
+            sess = req.session;
+            sess.username = username;
+            sess.user_id = model.get('id');
+            console.log('WE HAVE A MATCH');
+            res.redirect('/');
+          } else {
+            console.log('WRONG PASSWORD!');
+            res.redirect('/signup');
+          }
+        });
+      } else {
+        console.log('username not found');
+      }
+    });
+  });
+
+// app.get('/create', 
+// function(req, res) {
+//   res.render('index');
+// });
+
+app.get('/links', 
+function(req, res) {
+  Links.reset().fetch().then(function(links) {
+    res.send(200, links.models);
+  });
+});
+
+app.post('/links', 
+function(req, res) {
+  var uri = req.body.url;
+
+  if (!util.isValidUrl(uri)) {
+    console.log('Not a valid url: ', uri);
+    return res.send(404);
+  }
+
+  new Link({ url: uri }).fetch().then(function(found) {
+    if (found) {
+      res.send(200, found.attributes);
+    } else {
+      util.getUrlTitle(uri, function(err, title) {
+        if (err) {
+          console.log('Error reading URL heading: ', err);
+          return res.send(404);
+        }
+
+
+        Links.create({
+          url: uri,
+          title: title,
+          user_id: sess.user_id,
+          base_url: req.headers.origin
+        })
+        .then(function(newLink) {
+          console.log('the new link', newLink);
+          console.log('LOGGING IN LINK CREATION', sess, sess.user_id);
+          res.send(200, newLink);
+        });
+      });
+    }
+  });
+});
+
+/************************************************************/
+// Write your authentication routes here
+/************************************************************/
 
 //upon login, generate session "cookie"/secret
 
@@ -152,5 +198,3 @@ app.get('/*', function(req, res) {
 
 console.log('Shortly is listening on 4568');
 app.listen(4568);
-
-//hi git
