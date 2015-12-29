@@ -112,7 +112,7 @@ function(req, res) {
     var filteredModels = links.where({ user_id: sess.user_id});
 
     //TODO: When we input filtered models, we cannot add or update any new urls.
-    res.send(200, links.models);
+    res.send(200, filteredModels);
   });
 });
 
