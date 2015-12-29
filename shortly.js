@@ -32,7 +32,6 @@ var sess;
 
 app.post('/',
   function(req, res) {
-    console.log('ON THE RIGHT TRACK');
     req.session.destroy(function(err){
     if(err){
       console.log(err);
@@ -118,6 +117,7 @@ function(req, res) {
 
 app.post('/links', 
 function(req, res) {
+  sess = req.session;
   var uri = req.body.url;
 
   if (!util.isValidUrl(uri)) {
@@ -135,7 +135,6 @@ function(req, res) {
           return res.send(404);
         }
 
-
         Links.create({
           url: uri,
           title: title,
@@ -143,8 +142,6 @@ function(req, res) {
           base_url: req.headers.origin
         })
         .then(function(newLink) {
-          console.log('the new link', newLink);
-          console.log('LOGGING IN LINK CREATION', sess, sess.user_id);
           res.send(200, newLink);
         });
       });
