@@ -30,12 +30,6 @@ app.use(session({secret:'jrrtoken'}));
 var sess;
 
 
-
-// app.get('/', 
-// function(req, res) {
-//   console.log(req.session);
-//   res.render('signup');
-// });
 app.post('/',
   function(req, res) {
     console.log('ON THE RIGHT TRACK');
@@ -53,7 +47,7 @@ app.get('/',
     sess = req.session;
     if (sess.username) {
       res.render('index');
-      //redirect to link page
+
     } else {
       res.render('signup');
     }
@@ -87,7 +81,6 @@ app.post('/login',
     var username = req.body.username;
     var password = req.body.password;
 
-    //check database for user
     new User ({ username: username}).fetch()
     .then(function(model) {
       if (model) {
@@ -111,14 +104,14 @@ app.post('/login',
     });
   });
 
-// app.get('/create', 
-// function(req, res) {
-//   res.render('index');
-// });
 
 app.get('/links', 
 function(req, res) {
   Links.reset().fetch().then(function(links) {
+    //TODO filter out links using sess.user_id
+    var filteredModels = links.where({ user_id: sess.user_id});
+
+    //TODO: When we input filtered models, we cannot add or update any new urls.
     res.send(200, links.models);
   });
 });
