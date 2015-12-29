@@ -8,6 +8,9 @@ var Link = db.Model.extend({
   defaults: {
     visits: 0
   },
+  user_id: function () {
+    return this.belongsTo(User, 'user_id');
+  },
   clicks: function() {
     return this.hasMany(Click);
   },

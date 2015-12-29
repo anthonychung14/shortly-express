@@ -22,6 +22,7 @@ db.knex.schema.hasTable('urls').then(function(exists) {
       link.string('code', 100);
       link.string('title', 255);
       link.integer('visits');
+      link.integer('user_id');
       link.timestamps();
     }).then(function (table) {
       console.log('Created Table', table);
@@ -40,6 +41,26 @@ db.knex.schema.hasTable('clicks').then(function(exists) {
     });
   }
 });
+
+db.knex.schema.hasTable('users').then(function(exists) {
+  if (!exists) {
+    db.knex.schema.createTable('users', function (user) {
+      user.increments('id').primary();
+      user.integer('link_id');
+      user.string('username', 255).unique();
+      user.string('password', 255);
+      user.timestamps();
+    }).then(function (table) {
+      console.log('Created Table', table);
+    });
+  }
+});
+
+//a connect table
+//link ID from one table and user_id from another table
+
+//whenever we do queries for user-specific
+//inner joins selecting for user ID
 
 /************************************************************/
 // Add additional schema definitions below
